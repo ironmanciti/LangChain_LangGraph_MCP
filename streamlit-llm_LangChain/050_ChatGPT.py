@@ -1,22 +1,19 @@
 #---------------------------------------------------------
-# langgraph를 이용한 Chatbot 구현
+# Streamlit Session 기반 Chatbot 구현 (단순화)
 #---------------------------------------------------------
 # .env 파일에서 환경 변수를 읽어옵니다.
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
 
 import streamlit as st
-from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import StateGraph, START, MessagesState
+from langchain.chat_models import init_chat_model
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 # streamlit_chat 라이브러리
 from streamlit_chat import message  # 채팅 말풍선 형태로 메시지를 보여줍니다.
 
-# LLM 초기화
-llm = ChatOpenAI(model="gpt-4.1-nano")
+# LLM 초기화 (init_chat_model 방식)
+llm = init_chat_model("gpt-5-nano", model_provider="openai")
 
 # ---------------------------------------------------------------------------------
 # 페이지 설정
@@ -36,38 +33,11 @@ refresh_button = st.sidebar.button("대화 내용 초기화")
 summaries_button = st.sidebar.button("대화 내용 요약")
 
 # ---------------------------------------------------------------------------------
-# LangGraph 앱과 MemorySaver 초기화 (최초 1회만)
+# Streamlit Session State 초기화 (최초 1회만)
 # ---------------------------------------------------------------------------------
-if "app" not in st.session_state:
-    
-    # 1) LangGraph의 워크플로우(StateGraph) 정의
-    workflow = StateGraph(state_schema=MessagesState)
-
-    # 1-1) 프롬프트 템플릿 정의 (표준 구조 적용)
-    prompt_template = ChatPromptTemplate.from_messages([
-        ("system", "당신은 친구처럼 말합니다. 모든 질문에 최선을 다해 대답하세요."),
-        MessagesPlaceholder(variable_name="messages"),
-    ])
-
-    # 2) 모델 호출 함수 정의 (프롬프트 템플릿 적용)
-    def call_model(state: MessagesState):
-        prompt = prompt_template.invoke({"messages": state["messages"]})
-        response = llm.invoke(prompt)
-        return {"messages": response}
-
-    # 3) 노드 및 엣지 연결
-    workflow.add_node("model", call_model)
-    workflow.add_edge(START, "model")
-
-    # 4) MemorySaver를 사용해 대화 상태를 메모리에 저장/불러오기
-    memory = MemorySaver()
-
-    # 5) LangGraph 앱 컴파일
-    st.session_state.app = workflow.compile(checkpointer=memory)
-
-    # 6) 대화 이력을 저장할 메시지 리스트 초기화
+if "messages" not in st.session_state:
     st.session_state.messages = [
-        SystemMessage(content="당신은 유용한 도우미입니다.")
+        SystemMessage(content="당신은 친구처럼 말합니다. 모든 질문에 최선을 다해 대답하세요.")
     ]
 
 # ---------------------------------------------------------------------------------
@@ -76,7 +46,7 @@ if "app" not in st.session_state:
 # 1) "대화 내용 초기화" 버튼: 대화 기록 리셋
 if refresh_button:
     st.session_state.messages = [
-        SystemMessage(content="당신은 유용한 도우미입니다.")
+        SystemMessage(content="당신은 친구처럼 말합니다. 모든 질문에 최선을 다해 대답하세요.")
     ]
 
 # 2) "대화 내용 요약" 버튼: LLM에게 요약을 요청해 결과를 사이드바에 표시
@@ -124,15 +94,13 @@ with st.form(key='my_form', clear_on_submit=True):
         # 사용자 입력을 HumanMessage 로 추가
         st.session_state.messages.append(HumanMessage(content=user_input))
         
-        # LangGraph 앱을 호출해 AI 응답 생성
-        output = st.session_state.app.invoke(
-            {"messages": user_input},
-            config={"configurable": {"thread_id": "chat1"}}
-        )
-        
-        # 새롭게 생성된 AI 응답
-        response = output["messages"][-1].content
-        st.session_state.messages.append(AIMessage(content=response))
+        # LLM을 직접 호출해 AI 응답 생성 (Streamlit Session 방식)
+        try:
+            response = llm.invoke(st.session_state.messages)
+            st.session_state.messages.append(AIMessage(content=response.content))
+        except Exception as e:
+            error_msg = f"에러가 발생했습니다: {str(e)}"
+            st.session_state.messages.append(AIMessage(content=error_msg))
 
 # ---------------------------------------------------------------------------------
 # "마지막 AIMessage" 폼 바로 아래에 표시

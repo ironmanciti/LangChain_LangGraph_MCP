@@ -4,13 +4,13 @@ load_dotenv(find_dotenv())
 #------------------------------------------------------------
 
 import streamlit as st
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import init_chat_model
 
 # LangChain 라이브러리를 사용하여 자연어 처리를 수행하는 간단한 웹 애플리케이션을 만드는 Python 스크립트입니다.
 
 # 사용자 입력에 대한 응답을 반환하는 함수입니다.
 def load_answer(question):
-    llm = ChatOpenAI(model="gpt-4.1-nano")
+    llm = init_chat_model("gpt-5-nano", model_provider="openai")
     answer = llm.invoke(question)
     return answer
 

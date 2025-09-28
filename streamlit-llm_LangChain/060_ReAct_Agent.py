@@ -1,20 +1,18 @@
 #---------------------------------------------------------
-# LangGraph ReAct Agent 기반 Chatbot 구현
+# LangGraph ReAct Agent 기반 Chatbot 구현 (Streamlit 표준 방식)
 #---------------------------------------------------------
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
 
 import streamlit as st
-from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.memory import MemorySaver
+from langchain.chat_models import init_chat_model
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from streamlit_chat import message
 from langchain_tavily import TavilySearch
 
-# LLM 및 도구 초기화
-llm = ChatOpenAI(model="gpt-4.1-nano")
+# LLM 및 도구 초기화 (init_chat_model 방식)
+llm = init_chat_model("gpt-5-nano", model_provider="openai")
 search_tool = TavilySearch(max_results=2)
 tools = [search_tool]
 
@@ -32,13 +30,12 @@ refresh_button = st.sidebar.button("대화 내용 초기화")
 summaries_button = st.sidebar.button("대화 내용 요약")
 
 # ---------------------------------------------------------------------------------
-# LangGraph ReAct Agent 및 MemorySaver 초기화 (최초 1회만)
+# LangGraph ReAct Agent 초기화 (Streamlit 표준 방식)
 # ---------------------------------------------------------------------------------
 if "agent" not in st.session_state:
-    memory = MemorySaver()
-    agent = create_react_agent(llm, tools, checkpointer=memory)
+    # checkpointer 없이 agent 생성 (Streamlit session_state 사용)
+    agent = create_react_agent(llm, tools)
     st.session_state.agent = agent
-    st.session_state.memory = memory
     st.session_state.messages = [SystemMessage(content="당신은 유용한 도우미입니다.")]
 
 # ---------------------------------------------------------------------------------
@@ -74,12 +71,18 @@ with st.form(key='my_form', clear_on_submit=True):
     submit_button = st.form_submit_button(label='Send')
 
     if submit_button and user_input:
+        # 사용자 메시지 추가
         st.session_state.messages.append(HumanMessage(content=user_input))
-        # ReAct Agent 실행 (stream 모드)
-        config = {"configurable": {"thread_id": "chat1"}}
-        for step in st.session_state.agent.stream({"messages": st.session_state.messages}, config, stream_mode="values"):
-            ai_msg = step["messages"][-1]
-        st.session_state.messages.append(AIMessage(content=ai_msg.content))
+        
+        # ReAct Agent 실행 (Streamlit 표준 방식)
+        try:
+            # agent 실행 (stream 모드 없이)
+            response = st.session_state.agent.invoke({"messages": st.session_state.messages})
+            ai_msg = response["messages"][-1]
+            st.session_state.messages.append(AIMessage(content=ai_msg.content))
+        except Exception as e:
+            error_msg = f"에러가 발생했습니다: {str(e)}"
+            st.session_state.messages.append(AIMessage(content=error_msg))
 
 # ---------------------------------------------------------------------------------
 # 마지막 AIMessage 폼 바로 아래에 표시
