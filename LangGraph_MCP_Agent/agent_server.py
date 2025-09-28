@@ -107,11 +107,12 @@ def get_database_info() -> dict:
         return {"error": "데이터베이스가 연결되지 않았습니다."}
     
     try:
+        tables = db.get_usable_table_names()
         return {
-            "database_name": "Chinook",
-            "dialect": db.dialect,
-            "tables": db.get_usable_table_names(),
-            "description": "Chinook은 디지털 미디어 스토어를 나타내는 샘플 데이터베이스입니다."
+            "database": "Chinook",
+            "tables_count": len(tables),
+            "tables": tables[:3] + (["..."] if len(tables) > 3 else []),  # 처음 3개만 표시
+            "description": "디지털 미디어 스토어 샘플 데이터베이스"
         }
     except Exception as e:
         return {"error": f"데이터베이스 정보 조회 중 오류: {str(e)}"}
@@ -124,6 +125,9 @@ def get_table_info(table_name: str) -> str:
     
     try:
         schema_info = db.get_table_info([table_name])
+        # 스키마 정보를 100자로 제한
+        if len(schema_info) > 100:
+            return schema_info[:100] + "..."
         return schema_info
     except Exception as e:
         return f"테이블 정보 조회 중 오류: {str(e)}"

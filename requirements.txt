@@ -56,7 +56,6 @@ httpcore==1.0.9
 httptools==0.6.4
 httpx==0.28.1
 httpx-sse==0.4.1
-huggingface-hub==0.33.1
 humanfriendly==10.0
 idna==3.10
 importlib_metadata==8.7.0
@@ -184,7 +183,6 @@ safetensors==0.5.3
 scipy==1.16.0
 seaborn==0.13.2
 Send2Trash==1.8.3
-sentence-transformers==4.1.0
 shellingham==1.5.4
 six==1.17.0
 smmap==5.0.2
@@ -207,7 +205,6 @@ toml==0.10.2
 tornado==6.5.1
 tqdm==4.67.1
 traitlets==5.14.3
-transformers==4.53.0
 typer==0.16.0
 types-python-dateutil==2.9.0.20250516
 types-requests==2.32.4.20250611
@@ -230,3 +227,5 @@ yarl==1.20.1
 youtube-search==2.1.2
 zipp==3.23.0
 zstandard==0.23.0
+# Notion 자동화 MCP 서버 의존성
+requests==2.32.4

@@ -2,3 +2,7 @@
 OPENAI_API_KEY=sk-FeQOB*******************************************************uYUNsRlXmB
 LANGSMITH_API_KEY=lsv2_*******************************************************f5756
 TAVILY_API_KEY=tvly-************************2Oh
+
+# Notion API 설정 (자동 업데이트용)
+NOTION_API_KEY=secret_*******************************************************your_notion_api_key
+NOTION_PAGE_ID=your_notion_page_id_here
