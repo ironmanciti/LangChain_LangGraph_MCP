@@ -1,8 +1,8 @@
 #---------------------------------------------------------
 # LangGraph ReAct Agent 기반 Chatbot 구현 (Streamlit 표준 방식)
 #---------------------------------------------------------
-from dotenv import load_dotenv, find_dotenv
-_ = load_dotenv(find_dotenv())
+from dotenv import load_dotenv
+_ = load_dotenv()
 
 import streamlit as st
 from langchain.chat_models import init_chat_model
